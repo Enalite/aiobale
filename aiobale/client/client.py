@@ -1492,7 +1492,7 @@ class Client:
             AiobaleError: For client-side errors.
         """
         call = GetContacts()
-        result: BlockedUsersResponse = await self(call)
+        result: BannedUsersResponse = await self(call)
         return result.users
 
     async def search_contact(self, phone_number: str) -> Optional[InfoPeer]:
