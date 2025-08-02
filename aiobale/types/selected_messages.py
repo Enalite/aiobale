@@ -3,7 +3,7 @@ from typing import List, TYPE_CHECKING
 
 from .base import BaleObject
 from .peer import Peer
-from ..utils import Int64VarintCodec
+from ..utils import decode_list
 
 
 class SelectedMessages(BaleObject):
@@ -37,10 +37,8 @@ class SelectedMessages(BaleObject):
         - Decodes field "2" (message IDs) from a list of 64-bit varints.
         - Decodes nested field "3" (dates) from a nested varint list under key "1".
         """
-        data["2"] = Int64VarintCodec().decode_list(data["2"]) if "2" in data else []
-        data["3"] = (
-            Int64VarintCodec().decode_list(data["3"]["1"]) if "3" in data else []
-        )
+        data["2"] = decode_list(data["2"]) if "2" in data else []
+        data["3"] = decode_list(data["3"]["1"]) if "3" in data else []
         return data
 
     if TYPE_CHECKING:

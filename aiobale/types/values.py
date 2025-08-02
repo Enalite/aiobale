@@ -1,5 +1,5 @@
 from pydantic import Field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from .base import BaleObject
 from .int_bool import IntBool
@@ -81,6 +81,24 @@ class BytesValue(BaleObject):
             __pydantic__self__,
             *,
             value: bytes,
+            **__pydantic_kwargs
+        ) -> None:
+            super().__init__(value=value, **__pydantic_kwargs)
+
+
+class IntListValue(BaleObject):
+    """
+    Wrapper class for list data.
+    """
+
+    value: List[int] = Field(..., alias="1")
+    """The wrapped int values."""
+
+    if TYPE_CHECKING:
+        def __init__(
+            __pydantic__self__,
+            *,
+            value: List[int],
             **__pydantic_kwargs
         ) -> None:
             super().__init__(value=value, **__pydantic_kwargs)

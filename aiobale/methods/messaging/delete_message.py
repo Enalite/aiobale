@@ -1,8 +1,7 @@
 from pydantic import Field, model_validator
 from typing import TYPE_CHECKING, Any, Dict, List
 
-from ...types import Peer, IntValue, BytesValue
-from ...utils import Int64VarintCodec
+from ...types import Peer, IntValue, IntListValue
 from ...types.responses import DefaultResponse
 from ...enums import Services
 from ..base import BaleMethod
@@ -26,12 +25,12 @@ class DeleteMessage(BaleMethod):
     The peer (chat or user) from which the messages are being deleted.
     """
 
-    message_ids: bytes = Field(..., alias="2")
+    message_ids: List[int] = Field(..., alias="2")
     """
     Encoded list of message identifiers to be deleted.
     """
 
-    dates: BytesValue = Field(..., alias="3")
+    dates: IntListValue = Field(..., alias="3")
     """
     Encoded list of timestamps corresponding to the messages being deleted.
     """
@@ -64,7 +63,7 @@ class DeleteMessage(BaleMethod):
     @model_validator(mode="before")
     @classmethod
     def _fix_lists(cls, data: Dict[str, Any]) -> Dict[str, Any]:
-        data["message_ids"] = Int64VarintCodec.encode_list(data["message_ids"])
-        data["dates"] = BytesValue(value=Int64VarintCodec.encode_list(data["dates"]))
+        if "dates" in data:
+            data["dates"] = IntListValue(value=data["dates"])
 
         return data

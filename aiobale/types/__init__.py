@@ -16,7 +16,7 @@ from .ext import ExtData, ExtValue, ExtKeyValue
 from .int_bool import IntBool
 from .user import UserAuth, User
 from .update import Update, UpdateBody
-from .values import StringValue, IntValue, BytesValue, BoolValue
+from .values import StringValue, IntValue, BytesValue, BoolValue, IntListValue
 from .info_message import InfoMessage
 from .quoted_message import QuotedMessage
 from .message_data import MessageData
@@ -79,6 +79,7 @@ __all__ = (
     "StringValue",
     "IntValue",
     "BytesValue",
+    "IntListValue",
     "InfoMessage",
     "QuotedMessage",
     "MessageData",
@@ -128,5 +129,5 @@ __all__ = (
     "DocumentsExt",
     "Wallet",
     "GiftPacket",
-    "Winner"
+    "Winner",
 )

@@ -45,12 +45,18 @@ def _parse_protobuf_fields(data: bytes) -> List[Tuple[int, int, bytes]]:
 
         if wire_type == 0:  # varint
             value, n_val = _read_varint(data, i)
-            out.append((field_no, wire_type, value.to_bytes((value.bit_length() + 7) // 8 or 1, 'little')))
+            out.append(
+                (
+                    field_no,
+                    wire_type,
+                    value.to_bytes((value.bit_length() + 7) // 8 or 1, "little"),
+                )
+            )
             i += n_val
         elif wire_type == 1:  # 64-bit
             if i + 8 > length:
                 raise ValueError("Invalid 64-bit field: data too short")
-            out.append((field_no, wire_type, data[i:i+8]))
+            out.append((field_no, wire_type, data[i : i + 8]))
             i += 8
         elif wire_type == 2:  # length-delimited
             raw_bytes, n_tot = _parse_length_delimited(data, i)
@@ -59,7 +65,7 @@ def _parse_protobuf_fields(data: bytes) -> List[Tuple[int, int, bytes]]:
         elif wire_type == 5:  # 32-bit
             if i + 4 > length:
                 raise ValueError("Invalid 32-bit field: data too short")
-            out.append((field_no, wire_type, data[i:i+4]))
+            out.append((field_no, wire_type, data[i : i + 4]))
             i += 4
         else:
             raise ValueError(f"Unknown wire type {wire_type} at position {i}")
@@ -70,14 +76,14 @@ def _is_valid_text(s: str, check_first_bytes: bool = True) -> bool:
     if s.isdigit():
         return True
 
-    if re.findall(r'(\\x[0-9A-Fa-f]{2}|\\n|\\r|\\t)', s):
-        escape_like = len(re.findall(r'(\\x[0-9A-Fa-f]{2}|\\n|\\r|\\t)', s))
+    if re.findall(r"(\\x[0-9A-Fa-f]{2}|\\n|\\r|\\t)", s):
+        escape_like = len(re.findall(r"(\\x[0-9A-Fa-f]{2}|\\n|\\r|\\t)", s))
         if escape_like / max(len(s), 1) > 0.1:
             return False
 
-    printable = sum(1 for c in s if unicodedata.category(c)[0] in ('L', 'N', 'P', 'Z'))
+    printable = sum(1 for c in s if unicodedata.category(c)[0] in ("L", "N", "P", "Z"))
     total = len(s)
-    
+
     if total and (printable / total) > 0.95:
         if check_first_bytes and len(s) >= 5:
             return _is_valid_text(s[:5], False)
@@ -86,12 +92,22 @@ def _is_valid_text(s: str, check_first_bytes: bool = True) -> bool:
 
 
 class ProtoBuf:
-    def encode(self, data: Dict[str, Any], force_raw: bool = True) -> Union[bytes, str]:
+    def encode(
+        self,
+        data: Dict[str, Any],
+        force_raw: bool = True,
+        type_def: Optional[Dict[str, Any]] = None,
+    ) -> Union[bytes, str]:
         typedef = self.infer_typedef(data)
+        if type_def:
+            typedef.update(type_def)
+
         encoded = encode_message(data, typedef)
         return encoded if force_raw else base64.b64encode(encoded).decode("utf-8")
 
-    def decode(self, value: bytes, type_def: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def decode(
+        self, value: bytes, type_def: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         decoded, _ = decode_message(value, type_def)
         return self._convert_bytes_to_string(self._fix_fields(decoded, value))
 
@@ -102,7 +118,7 @@ class ProtoBuf:
             except Exception as e:
                 print(e)
                 return data
-            
+
             new_data: Dict[str, Any] = {}
 
             for key, value in data.items():
@@ -124,7 +140,9 @@ class ProtoBuf:
                 elif isinstance(value, dict) and candidates:
                     new_data[key] = self._fix_fields(value, candidates[0][2])
                 elif isinstance(value, list):
-                    new_data[key] = [self._fix_fields(v, raw_message_bytes) for v in value]
+                    new_data[key] = [
+                        self._fix_fields(v, raw_message_bytes) for v in value
+                    ]
                 else:
                     new_data[key] = value
 
@@ -144,7 +162,7 @@ class ProtoBuf:
             try:
                 return obj.decode("utf-8")
             except UnicodeDecodeError:
-                return obj.hex()
+                return obj
         return obj
 
     def infer_typedef(self, message_dict: Dict[str, Any]) -> Dict[str, Any]:
@@ -162,7 +180,11 @@ class ProtoBuf:
                     }
                 else:
                     base_type = "int" if isinstance(elem, int) else "bytes"
-                    typedef[field_num] = {"rule": "repeated", "type": base_type, "name": ""}
+                    typedef[field_num] = {
+                        "rule": "repeated",
+                        "type": base_type,
+                        "name": "",
+                    }
             elif isinstance(value, dict):
                 sub_typedef = self.infer_typedef(value)
                 typedef[field_num] = {

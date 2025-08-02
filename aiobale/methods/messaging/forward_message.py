@@ -1,8 +1,7 @@
-from pydantic import Field, model_validator
-from typing import TYPE_CHECKING, Any, Dict, List
+from pydantic import Field
+from typing import TYPE_CHECKING, Any, List
 
 from ...types import Peer, InfoMessage
-from ...utils import Int64VarintCodec
 from ...types.responses import DefaultResponse
 from ...enums import Services
 from ..base import BaleMethod
@@ -26,7 +25,7 @@ class ForwardMessages(BaleMethod):
     The target peer (chat or user) to which the messages are being forwarded.
     """
 
-    message_ids: bytes = Field(..., alias="2")
+    message_ids: List[int] = Field(..., alias="2")
     """
     Encoded list of message identifiers that are being forwarded.
     """
@@ -53,9 +52,3 @@ class ForwardMessages(BaleMethod):
                 forwarded_messages=forwarded_messages,
                 **__pydantic_kwargs
             )
-
-    @model_validator(mode="before")
-    @classmethod
-    def _fix_lists(cls, data: Dict[str, Any]) -> Dict[str, Any]:
-        data["message_ids"] = Int64VarintCodec.encode_list(data["message_ids"])
-        return data
