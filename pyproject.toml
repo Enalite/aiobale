@@ -1,6 +1,6 @@
 [project]
 name = "aiobale"
-version = "0.1.2"
+version = "0.1.3"
 description = "Modern async client for Bale."
 authors = [
     { name = "Alireza Jahani", email = "mrbansti@gmail.com" }
