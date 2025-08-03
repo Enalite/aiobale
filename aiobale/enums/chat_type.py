@@ -20,5 +20,5 @@ class ChatType(int, Enum):
     BOT = 4
     """Represents a bot chat."""
 
-    SUPRER_GROUP = 5
+    SUPER_GROUP = 5
     """Represents a super group chat."""

@@ -1,7 +1,7 @@
 import asyncio
 from PIL import Image
 from io import BytesIO
-from aiobale import Client, Dispatcher
+from aiobale import F, Client, Dispatcher
 from aiobale.types import Message, FileInput
 
 dp = Dispatcher()
@@ -27,7 +27,7 @@ def get_image_size(image_path: str) -> tuple[int, int]:
         return img.width, img.height
 
 
-@dp.message(lambda m: m.text == "image")
+@dp.message(F.text == "image")
 async def image(msg: Message):
     image_path = "image.jpg"
     image_tumnbnail = make_thumbnail(image_path)
@@ -43,7 +43,7 @@ async def image(msg: Message):
     )
 
 
-@dp.message(lambda m: m.text == "doc")
+@dp.message(F.text == "doc")
 async def doc(msg: Message):
     await msg.reply_document(FileInput("image.jpg"))
 

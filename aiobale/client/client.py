@@ -697,6 +697,20 @@ class Client:
             raise AiobaleError("Error while parsing data.") from e
 
     async def sign_out(self, delete_session: bool = True) -> None:
+        """
+        Signs out the current user and optionally deletes the session file.
+
+        This method sends a sign-out request to the server, stops the client session,
+        and if requested, deletes the local session file from disk.
+
+        Args:
+            delete_session (bool, optional): Whether to delete the local session file after sign out.
+                Defaults to True.
+
+        Raises:
+            OSError: If the session file deletion fails due to an OS-level error.
+            Exception: Any unexpected exceptions during stopping the client or file deletion.
+        """
         call = SignOut()
         await self.session.post(call, just_bale_type=True, token=self.__token)
         await self.stop()

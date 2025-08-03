@@ -1,13 +1,13 @@
 import asyncio
 from aiobale import Client, Dispatcher
-from aiobale.enums import ChatType
+from aiobale.filters import IsGift, IsPrivate
 from aiobale.types import Message
 
 dp = Dispatcher()
 client = Client(dp)
 
 
-@dp.message(lambda m: m.content.gift and m.chat.type == ChatType.PRIVATE)
+@dp.message(IsGift(), IsPrivate())
 async def handler(msg: Message):
     await client.open_packet(msg)
 

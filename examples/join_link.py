@@ -3,6 +3,7 @@ import re
 from typing import Optional
 from aiobale import Client, Dispatcher
 from aiobale.types import Message
+from aiobale.filters import IsText
 
 dp = Dispatcher()
 client = Client(dp)
@@ -25,7 +26,7 @@ def get_link(text: str) -> Optional[dict]:
         return None
 
 
-@dp.message(lambda m: m.text)
+@dp.message(IsText())
 async def join(msg: Message):
     link_data = get_link(msg.text)
     if not link_data:

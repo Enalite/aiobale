@@ -7,8 +7,8 @@ client = Client(dp)
 
 
 def extract_content(msg: Message):
-    if msg.content.document:
-        return 'document', msg.content.document
+    if msg.document:
+        return 'document', msg.document
     elif msg.text:
         return 'text', msg.text
     return None, None
