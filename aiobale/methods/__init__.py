@@ -12,7 +12,7 @@ from .messaging import (
     LoadPinnedMessages,
     LoadDialogs,
 )
-from .auth import StartPhoneAuth, ValidateCode, ValidatePassword
+from .auth import StartPhoneAuth, ValidateCode, ValidatePassword, SignOut
 from .user import (
     EditName,
     CheckNickName,
@@ -66,7 +66,7 @@ from .groups import (
     SetGroupDefaultPermissions,
     GetBannedUsers,
     UnbanUser,
-    GetGroupPreview
+    GetGroupPreview,
 )
 from .kifpool import GetMyKifpools
 from .giftpacket import SendGiftPacketWithWallet, OpenGiftPacket
@@ -153,5 +153,6 @@ __all__ = (
     "BaleType",
     "GetMyKifpools",
     "SendGiftPacketWithWallet",
-    "OpenGiftPacket"
+    "OpenGiftPacket",
+    "SignOut"
 )

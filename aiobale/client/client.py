@@ -9,6 +9,7 @@ from typing import (
     AsyncGenerator,
     BinaryIO,
     Callable,
+    Coroutine,
     List,
     Literal,
     Optional,
@@ -101,6 +102,7 @@ from ..methods import (
     GetMyKifpools,
     SendGiftPacketWithWallet,
     OpenGiftPacket,
+    SignOut,
 )
 from ..types import (
     MessageContent,
@@ -271,6 +273,8 @@ class Client:
         self._ping_task = None
         self._ping_id = 0
         self._lock = asyncio.Lock()
+        self._tasks = set()
+        self._stopped = False
 
         if not isinstance(session_file, str) or not session_file.lower().endswith(
             ".bale"
@@ -315,6 +319,12 @@ class Client:
         in event handling and API interactions.
         """
         return self._me.id
+    
+    def _create_task(self, coro: Coroutine):
+        task = asyncio.create_task(coro)
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
+        return task
 
     def _write_session_content(self, content: bytes) -> None:
         if not self.__session_file:
@@ -361,6 +371,17 @@ class Client:
 
         return await self.session.make_request(method)
 
+    async def _cleanup_session(self):
+        async with self._lock:
+            if self.session and not self.session.is_closed():
+                await self.session.close()
+
+            if self._ping_task:
+                self._ping_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await self._ping_task
+                self._ping_task = None
+
     async def _send_ping(self):
         async with self._lock:
             if self.session.is_closed():
@@ -376,7 +397,7 @@ class Client:
                 await self.session.send_bytes(data, f"ping_{ping_id}")
             except RuntimeError:
                 logger.warning("Ping failed. Closing session to trigger restart.")
-                await self.session.close()
+                await self._cleanup_session()
 
     async def _ping_loop(self, interval=5):
         try:
@@ -387,16 +408,14 @@ class Client:
             pass
         except Exception as e:
             logger.error(f"Unexpected error in ping loop: {e}")
-            async with self._lock:
-                await self.session.close()
+            await self._cleanup_session()
 
     async def _safe_listen(self):
         try:
             await self.session._listen()
         except Exception as e:
             logger.error(f"Listen failed: {e}")
-            async with self._lock:
-                await self.session.close()
+            await self._cleanup_session()
 
     async def start(self, run_in_background: bool = False) -> None:
         """
@@ -413,9 +432,13 @@ class Client:
         and starts listening for incoming events. Use `run_in_background=True` to keep listening without blocking
         the current coroutine.
         """
+        self._stopped = False
+
         await self._ensure_token_exists()
 
-        while True:
+        while not self._stopped:
+            await self._cleanup_session()
+
             async with self._lock:
                 try:
                     logger.info("Trying to connect...")
@@ -423,27 +446,22 @@ class Client:
                     await self.session.handshake_request()
                     logger.info("Connected successfully.")
 
-                    if self._ping_task:
-                        self._ping_task.cancel()
-                        with suppress(asyncio.CancelledError):
-                            await self._ping_task
-
                     self._ping_task = asyncio.create_task(self._ping_loop())
+                    listen_task = self._create_task(self._safe_listen())
 
                 except Exception as e:
                     logger.error(f"Connection failed: {e}")
                     await asyncio.sleep(5)
                     continue
 
-            try:
-                if run_in_background:
-                    asyncio.create_task(self._safe_listen())
-                    break
-                else:
-                    await self._safe_listen()
-            except asyncio.CancelledError:
-                logger.info("Start cancelled.")
+            if run_in_background:
                 break
+            else:
+                try:
+                    await listen_task
+                except asyncio.CancelledError:
+                    logger.info("Start cancelled.")
+                    break
 
     async def stop(self):
         """
@@ -453,13 +471,21 @@ class Client:
         released. It should be called when the client is no longer needed to
         prevent resource leaks.
         """
+        self._stopped = True
         if self._ping_task:
             self._ping_task.cancel()
             with suppress(asyncio.CancelledError):
                 await self._ping_task
             self._ping_task = None
 
-        await self.session.close()
+        for task in list(self._tasks):
+            task.cancel()
+
+        for task in list(self._tasks):
+            with suppress(asyncio.CancelledError):
+                await task
+
+        await self._cleanup_session()
 
     async def handle_update(self, update: UpdateBody) -> None:
         """
@@ -635,6 +661,24 @@ class Client:
 
         except Exception as e:
             raise AiobaleError("Error while parsing data.") from e
+
+    async def sign_out(self, delete_session: bool = True) -> None:
+        call = SignOut()
+        await self.session.post(call, just_bale_type=True, token=self.__token)
+        await self.stop()
+
+        if (
+            delete_session
+            and self.__session_file
+            and os.path.exists(self.__session_file)
+        ):
+            try:
+                os.remove(self.__session_file)
+                logger.info(
+                    f"Session file '{self.__session_file}' deleted successfully."
+                )
+            except Exception as e:
+                logger.error(f"Failed to delete session file: {e}")
 
     async def send_message(
         self,

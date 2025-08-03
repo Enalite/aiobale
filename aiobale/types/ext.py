@@ -68,7 +68,7 @@ class ExtKeyValue(BaleObject):
     key: str = Field(..., alias="1")
     """The key or identifier of the metadata entry (e.g., 'client', 'version')."""
 
-    value: str = Field(..., alias="2")
+    value: str = Field("", alias="2")
     """The string value associated with the key."""
 
     if TYPE_CHECKING:
@@ -76,7 +76,7 @@ class ExtKeyValue(BaleObject):
             __pydantic__self__,
             *,
             key: str,
-            value: str,
+            value: str = "",
             **__pydantic_kwargs
         ) -> None:
             super().__init__(key=key, value=value, **__pydantic_kwargs)
