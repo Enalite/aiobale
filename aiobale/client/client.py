@@ -5,6 +5,7 @@ import io
 import pathlib
 import signal
 import sys
+import warnings
 import aiofiles
 import os
 from typing import (
@@ -3360,7 +3361,7 @@ class Client:
         call = GetMyKifpools()
         return await self(call)
 
-    async def send_giftpacket(
+    async def send_gift(
         self,
         chat_id: int,
         chat_type: ChatType,
@@ -3372,13 +3373,13 @@ class Client:
         token: Optional[str] = None,
     ) -> DefaultResponse:
         """
-        Sends a gift packet to a specified chat using the sender's wallet.
+        Sends a gift to a specified chat using the sender's wallet.
 
         Args:
             chat_id (int): ID of the target chat (user, group, or channel).
             chat_type (ChatType): Type of the target chat.
             amount (int): Total amount of the gift to be distributed.
-            message (str): Message to accompany the gift packet.
+            message (str): Message to accompany the gift.
             gift_count (int): Number of recipients who can claim the gift. Default is 1.
             giving_type (GivingType): Distribution type (e.g., equally or randomly). Default is SAME.
             show_amounts (bool): Whether to show individual received amounts to recipients.
@@ -3388,7 +3389,8 @@ class Client:
             DefaultResponse: A response indicating success or failure of the operation.
 
         Note:
-            The wallet token is required to send the gift. If not supplied, the method fetches it via `get_wallet()`.
+            This method replaces the deprecated `send_giftpacket()`.
+            The wallet token is required to send the gift. If not supplied, it is fetched via `get_wallet()`.
         """
         chat = Chat(id=chat_id, type=chat_type)
         peer = self._resolve_peer(chat)
@@ -3411,20 +3413,21 @@ class Client:
         )
         return await self(call)
 
-    async def open_packet(
+    async def open_gift(
         self, message: Union[Message, InfoMessage], receiver_token: Optional[str] = None
     ) -> PacketResponse:
         """
-        Opens a gift packet from a specific message using the receiver's token.
+        Opens a gift from a specific message using the receiver's token.
 
         Args:
-            message (Union[Message, InfoMessage]): The message that contains the gift packet.
+            message (Union[Message, InfoMessage]): The message that contains the gift.
             receiver_token (Optional[str]): Token to identify the receiver. If not provided, it is fetched automatically.
 
         Returns:
             PacketResponse: Contains details about the opening result, such as amount received, winners, and stats.
 
         Note:
+            This method replaces the deprecated `open_packet()`.
             If `receiver_token` is not provided, the method will call `get_wallet()` to obtain the current user's token.
         """
         message = self._ensure_info_message(message, rewrite_date=True)
@@ -3434,3 +3437,49 @@ class Client:
 
         call = OpenGiftPacket(message=message, receiver_token=receiver_token)
         return await self(call)
+    
+    async def send_giftpacket(
+        self,
+        chat_id: int,
+        chat_type: ChatType,
+        amount: int,
+        message: str,
+        gift_count: int = 1,
+        giving_type: GivingType = GivingType.SAME,
+        show_amounts: bool = True,
+        token: Optional[str] = None,
+    ) -> DefaultResponse:
+        """
+        DEPRECATED: Use `send_gift()` instead. This method will be removed in version 0.1.4.
+
+        Sends a gift packet to a specified chat using the sender's wallet.
+
+        Args:
+            (same as send_gift)
+        """
+        warnings.warn(
+            "send_giftpacket() is deprecated and will be removed in a future version. Use send_gift() instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        return await self.send_gift(
+            chat_id, chat_type, amount, message, gift_count, giving_type, show_amounts, token
+        )
+
+    async def open_packet(
+        self, message: Union[Message, InfoMessage], receiver_token: Optional[str] = None
+    ) -> PacketResponse:
+        """
+        DEPRECATED: Use `open_gift()` instead. This method will be removed in version 0.1.4.
+
+        Opens a gift packet from a specific message using the receiver's token.
+
+        Args:
+            (same as open_gift)
+        """
+        warnings.warn(
+            "open_packet() is deprecated and will be removed in a future version. Use open_gift() instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        return await self.open_gift(message, receiver_token)
