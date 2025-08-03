@@ -1,7 +1,17 @@
 from collections import defaultdict
-from typing import Any, Awaitable, Callable, Coroutine, Dict, List, Optional, Union, Type
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Coroutine,
+    Dict,
+    List,
+    Optional,
+    Union,
+    Type,
+)
 
-from .event.handler import Handler
+from .event.handler import Handler, FilterObject, CallbackType
 from .event.observer import EventObserver
 
 
@@ -14,13 +24,14 @@ class Router:
     particularly useful in event-driven architectures where different parts of
     the system need to respond to specific events.
     """
+
     def __init__(self, name: Optional[str] = None) -> None:
         self.name: str = name or hex(id(self))
         self._handlers: Dict[str, List[Handler]] = defaultdict(list)
         self._observer = EventObserver()
 
         self._register_default_event_types()
-        
+
         self.message = self._observer.get_decorator("message")
         self.message_deleted = self._observer.get_decorator("message_deleted")
         self.chat_deleted = self._observer.get_decorator("chat_deleted")
@@ -36,7 +47,7 @@ class Router:
 
     def _register_default_event_types(self) -> None:
         for event_type in (
-            "message", 
+            "message",
             "message_deleted",
             "chat_cleared",
             "chat_deleted",
@@ -47,13 +58,16 @@ class Router:
             "user_blocked",
             "user_unblocked",
             "group_message_pinned",
-            "group_pin_removed"
+            "group_pin_removed",
         ):
             self._observer.register(event_type, self._make_event_decorator(event_type))
 
-    def _make_event_decorator(self, event_type: str) -> Callable[..., Callable[..., Coroutine[Any, Any, Any]]]:
+    def _make_event_decorator(
+        self, event_type: str
+    ) -> Callable[..., Callable[..., Coroutine[Any, Any, Any]]]:
         def decorator(*filters: Callable[..., Union[bool, Awaitable[bool]]]):
             return self.register(event_type, *filters)
+
         return decorator
 
     def add_event_type(self, event_type: str) -> None:
@@ -62,11 +76,14 @@ class Router:
     def register(
         self,
         event_type: str,
-        *filters: Callable[..., Union[bool, Awaitable[bool]]],
-    ) -> Callable[[Callable[..., Coroutine[Any, Any, Any]]], Callable[..., Coroutine[Any, Any, Any]]]:
-
-        def decorator(func: Callable[..., Coroutine[Any, Any, Any]]):
-            handler = Handler(event_type=event_type, callback=func, filters=list(filters))
+        *filters: CallbackType,
+    ) -> Callable[[CallbackType], CallbackType]:
+        def decorator(func: CallbackType) -> CallbackType:
+            handler = Handler(
+                event_type=event_type,
+                callback=func,
+                filters=[FilterObject(filter_) for filter_ in filters],
+            )
             self._handlers[event_type].append(handler)
             return func
 

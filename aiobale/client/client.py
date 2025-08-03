@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 import io
 import pathlib
+import signal
+import sys
 import aiofiles
 import os
 from typing import (
@@ -405,7 +407,7 @@ class Client:
                 await asyncio.sleep(interval)
                 await self._send_ping()
         except asyncio.CancelledError:
-            pass
+            logger.info("Ping loop cancelled.")
         except Exception as e:
             logger.error(f"Unexpected error in ping loop: {e}")
             await self._cleanup_session()
@@ -416,8 +418,23 @@ class Client:
         except Exception as e:
             logger.error(f"Listen failed: {e}")
             await self._cleanup_session()
+            
+    def _setup_signal_handlers(self, loop):
+        def handler():
+            logger.info("Signal received, stopping client...")
+            asyncio.create_task(self.stop())
 
-    async def start(self, run_in_background: bool = False) -> None:
+        signals = []
+        if sys.platform != "win32":
+            signals = [signal.SIGINT, signal.SIGTERM]
+
+        for sig in signals:
+            try:
+                loop.add_signal_handler(sig, handler)
+            except NotImplementedError:
+                logger.warning(f"Signal {sig} handler not implemented.")
+
+    async def start(self, run_in_background: bool = False):
         """
         Starts the client session and begins listening for events.
         Args:
@@ -433,35 +450,45 @@ class Client:
         the current coroutine.
         """
         self._stopped = False
-
         await self._ensure_token_exists()
+        
+        loop = asyncio.get_running_loop()
+        self._setup_signal_handlers(loop)
 
-        while not self._stopped:
-            await self._cleanup_session()
+        try:
+            while not self._stopped:
+                await self._cleanup_session()
 
-            async with self._lock:
-                try:
-                    logger.info("Trying to connect...")
-                    await self.session.connect(self.__token)
-                    await self.session.handshake_request()
-                    logger.info("Connected successfully.")
+                async with self._lock:
+                    try:
+                        logger.info("Trying to connect...")
+                        await self.session.connect(self.__token)
+                        await self.session.handshake_request()
+                        logger.info("Connected successfully.")
 
-                    self._ping_task = asyncio.create_task(self._ping_loop())
-                    listen_task = self._create_task(self._safe_listen())
+                        self._ping_task = self._create_task(self._ping_loop())
+                        listen_task = self._create_task(self._safe_listen())
+                    except Exception as e:
+                        logger.error(f"Connection failed: {e}")
+                        await asyncio.sleep(5)
+                        continue
 
-                except Exception as e:
-                    logger.error(f"Connection failed: {e}")
-                    await asyncio.sleep(5)
-                    continue
+                if run_in_background:
+                    return
+                else:
+                    try:
+                        await listen_task
+                    except asyncio.CancelledError:
+                        logger.info("Listening task cancelled.")
+                        break
 
-            if run_in_background:
-                break
-            else:
-                try:
-                    await listen_task
-                except asyncio.CancelledError:
-                    logger.info("Start cancelled.")
-                    break
+        except KeyboardInterrupt:
+            logger.info("KeyboardInterrupt received, stopping client...")
+            await self.stop()
+        except Exception as e:
+            logger.error(f"Unhandled exception in start: {e}")
+            await self.stop()
+            raise
 
     async def stop(self):
         """
@@ -471,7 +498,12 @@ class Client:
         released. It should be called when the client is no longer needed to
         prevent resource leaks.
         """
+        if self._stopped:
+            return
+
         self._stopped = True
+        logger.info("Stopping client...")
+
         if self._ping_task:
             self._ping_task.cancel()
             with suppress(asyncio.CancelledError):
@@ -486,6 +518,7 @@ class Client:
                 await task
 
         await self._cleanup_session()
+        logger.info("Client stopped cleanly.")
 
     async def handle_update(self, update: UpdateBody) -> None:
         """

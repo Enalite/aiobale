@@ -10,9 +10,13 @@ warnings.filterwarnings(
 from .client.client import Client
 from .dispatcher.dispatcher import Dispatcher
 from .dispatcher.router import Router
+from .utils.magic_filter import MagicFilter
+
+F = MagicFilter()
 
 __all__ = (
     "Client",
     "Dispatcher",
-    "Router"
+    "Router",
+    "F"
 )

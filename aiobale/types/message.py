@@ -16,6 +16,7 @@ from .reaction_data import ReactionData
 from .reaction import Reaction
 from .file_details import FileDetails
 from .file_input import FileInput
+from .gift_packet import GiftPacket
 
 if TYPE_CHECKING:
     from .responses import DefaultResponse
@@ -104,6 +105,20 @@ class Message(BaleObject):
         if text_content is None:
             return None
         return text_content.value
+
+    @property
+    def document(self) -> Optional[DocumentMessage]:
+        """
+        Returns the document content of the message if available.
+        """
+        return self.content.document
+
+    @property
+    def gift(self) -> Optional[GiftPacket]:
+        """
+        Returns the document content of the message if available.
+        """
+        return self.content.gift
 
     @model_validator(mode="after")
     def attach_chat_to_reply(self) -> Message:
