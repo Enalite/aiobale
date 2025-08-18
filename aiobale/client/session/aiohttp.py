@@ -146,7 +146,7 @@ class AiohttpSession(BaseSession):
             headers.update(self._build_headers(token))
 
         url = f"{self.post_url}/{method.__service__}/{method.__method__}"
-        data = method.model_dump(by_alias=True)
+        data = method.model_dump(by_alias=True, exclude_none=True)
         payload = add_header(self.encoder(data))
 
         req = await self.session.post(url=url, headers=headers, data=payload)
