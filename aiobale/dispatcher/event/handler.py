@@ -27,7 +27,17 @@ class CallableObject:
         )
 
     async def call(self, *args: Any, **kwargs: Any) -> Any:
-        wrapped = partial(self.callback, *args, **kwargs)
+        callback = inspect.unwrap(self.callback)
+        sig = inspect.signature(callback)
+        filtered_kwargs = {}
+        
+        for name, param in sig.parameters.items():
+            if name in kwargs:
+                filtered_kwargs[name] = kwargs[name]
+            elif param.annotation.__name__ == "Client" and "client" in kwargs:
+                filtered_kwargs[name] = kwargs["client"]
+
+        wrapped = partial(callback, *args, **filtered_kwargs)
         if self.awaitable:
             return await wrapped()
 
