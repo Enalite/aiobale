@@ -11,12 +11,12 @@ async def lifespan(client: Client):
     
 
 dp = Dispatcher()
-client = Client(dispatcher=dp, lifespan=lifespan)
+main_client = Client(dispatcher=dp, lifespan=lifespan)
 
 
 @dp.message()
-async def handler(message: Message):
-    await message.answer("Hi from Aiobale!")
+async def handler(message: Message, client: Client):
+    await message.answer(f"Hi from client {client.id}.")
     
     
-client.run()
+main_client.run()
