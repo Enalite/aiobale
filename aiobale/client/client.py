@@ -18,6 +18,7 @@ from typing import (
     List,
     Literal,
     Optional,
+    Set,
     Tuple,
     Type,
     Final,
@@ -221,6 +222,41 @@ from .auth_cli import PhoneLoginCLI
 
 DEFAULT_SESSION: Final[pathlib.Path] = pathlib.Path("./session.bale")
 
+# --- Global registry of clients ---
+_CLIENTS: Set["Client"] = set()
+_SIGNAL_HANDLERS_INSTALLED: bool = False
+
+
+def _install_global_signal_handlers(loop):
+    global _SIGNAL_HANDLERS_INSTALLED
+    if _SIGNAL_HANDLERS_INSTALLED:
+        return
+    _SIGNAL_HANDLERS_INSTALLED = True
+
+    async def _shutdown_all():
+        logger.info("Signal received, stopping all clients...")
+        await asyncio.gather(
+            *(c.stop() for c in list(_CLIENTS)), return_exceptions=True
+        )
+        loop.stop()
+
+    def _schedule_shutdown():
+        asyncio.ensure_future(_shutdown_all(), loop=loop)
+
+    if sys.platform != "win32":
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            try:
+                loop.add_signal_handler(sig, _schedule_shutdown)
+            except NotImplementedError:
+                logger.warning(f"Signal {sig} handler not implemented.")
+    else:
+
+        def win_handler(sig, frame):
+            loop.call_soon_threadsafe(_schedule_shutdown)
+
+        signal.signal(signal.SIGINT, win_handler)
+        signal.signal(signal.SIGTERM, win_handler)
+
 
 @dataclass
 class IgnoredUpdates:
@@ -318,6 +354,8 @@ class Client:
         self._me = None
 
         self._add_token_via_file()
+
+        _CLIENTS.add(self)
 
     @property
     def token(self) -> str:
@@ -451,27 +489,6 @@ class Client:
             logger.error(f"Listen failed: {e}")
             await self._cleanup_session()
 
-    def _setup_signal_handlers(self, loop):
-        async def _stop_async():
-            logger.info("Signal received, stopping client...")
-            await self.stop()
-
-        def _stop_sync():
-            asyncio.create_task(_stop_async())
-
-        if sys.platform != "win32":
-            for sig in (signal.SIGINT, signal.SIGTERM):
-                try:
-                    loop.add_signal_handler(sig, _stop_sync)
-                except NotImplementedError:
-                    logger.warning(f"Signal {sig} handler not implemented.")
-        else:
-
-            def win_handler(sig, frame):
-                asyncio.create_task(_stop_async())
-
-            signal.signal(signal.SIGINT, win_handler)
-
     async def start(
         self, run_in_background: bool = False, signal_handling: bool = True
     ):
@@ -492,9 +509,9 @@ class Client:
         self._stopped = False
         await self._ensure_token_exists()
 
+        loop = asyncio.get_running_loop()
         if signal_handling:
-            loop = asyncio.get_running_loop()
-            self._setup_signal_handlers(loop)
+            _install_global_signal_handlers(loop)
 
         try:
             while not self._stopped:
@@ -530,6 +547,9 @@ class Client:
             logger.error(f"Unhandled exception in start: {e}")
             await self.stop()
             raise
+        finally:
+            if self in _CLIENTS:
+                _CLIENTS.remove(self)
 
     async def stop(self):
         """
