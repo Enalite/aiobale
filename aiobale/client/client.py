@@ -457,15 +457,14 @@ class Client:
         return await self.session.make_request(method)
 
     async def _cleanup_session(self):
-        async with self._lock:
-            if self.session and not self.session.is_closed():
-                await self.session.close()
+        if self.session and not self.session.is_closed():
+            await self.session.close()
 
-            if self._ping_task:
-                self._ping_task.cancel()
-                with suppress(asyncio.CancelledError):
-                    await self._ping_task
-                self._ping_task = None
+        if self._ping_task:
+            self._ping_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await self._ping_task
+            self._ping_task = None
 
     async def _send_ping(self):
         async with self._lock:
