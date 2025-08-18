@@ -15,6 +15,7 @@ import abc
 import time
 
 from ...utils import ProtoBuf
+from ...logger import logger
 from ...methods import BaleMethod, BaleType
 from ...types import (
     Request,
@@ -61,6 +62,7 @@ class BaseSession(abc.ABC):
         decoder: _Decoder = ProtoBuf().decode,
         encoder: _Encoder = ProtoBuf().encode,
         timeout: float = DEFAULT_TIMEOUT,
+        show_update_errors: bool = False
     ) -> None:
         self.ws_url = ws_url
         self.post_url = post_url
@@ -70,6 +72,7 @@ class BaseSession(abc.ABC):
         self._request_id = 0
         self._running = False
         self.session_id = int(time.time() * 1000)
+        self.show_update_errors = show_update_errors
 
         self.client: Optional[Client] = None
         self._pending_requests: Dict[Union[str, int], asyncio.Future] = {}
@@ -132,7 +135,12 @@ class BaseSession(abc.ABC):
 
     async def _handle_received_data(self, data: bytes) -> None:
         data = self.decoder(data)
-        received = Response.model_validate(data, context={"client": self.client})
+        try:
+            received = Response.model_validate(data, context={"client": self.client})
+        except Exception:
+            if self.show_update_errors:
+                logger.exception("Error while validating Update")
+            return
 
         if received.update is not None:
             await self.client.handle_update(received.update.body)
