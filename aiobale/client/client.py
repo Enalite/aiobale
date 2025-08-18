@@ -263,7 +263,7 @@ def _install_global_signal_handlers(loop):
 class IgnoredUpdates:
     event_type: str
     targets: List[Any] = field(default_factory=list)
-    
+
 
 @asynccontextmanager
 async def default_lifespan(client: Client):
@@ -323,10 +323,14 @@ class Client:
         lifespan: Optional[LifespanType] = None,
         proxy: Optional[str] = None,
         user_agent: Optional[str] = None,
-        show_update_errors: bool = False
+        show_update_errors: bool = False,
     ):
         if session is None:
-            session = AiohttpSession(user_agent=user_agent, proxy=proxy, show_update_errors=show_update_errors)
+            session = AiohttpSession(
+                user_agent=user_agent,
+                proxy=proxy,
+                show_update_errors=show_update_errors,
+            )
 
         session._bind_client(self)
         self.session: BaseSession = session
@@ -477,7 +481,7 @@ class Client:
             try:
                 await self.session.send_bytes(data, f"ping_{ping_id}")
             except RuntimeError:
-                logger.warning("Ping failed. Closing session to trigger restart.")
+                logger.warning(f"Ping failed. Closing session to trigger restart. (Client: {self.id})")
                 await self._cleanup_session()
 
     async def _ping_loop(self, interval=5):
@@ -486,16 +490,16 @@ class Client:
                 await asyncio.sleep(interval)
                 await self._send_ping()
         except asyncio.CancelledError:
-            logger.info("Ping loop cancelled.")
+            logger.info(f"Ping loop cancelled. (Client: {self.id})")
         except Exception as e:
-            logger.error(f"Unexpected error in ping loop: {e}")
+            logger.error(f"Unexpected error in ping loop (Client: {self.id}): {e}")
             await self._cleanup_session()
 
     async def _safe_listen(self):
         try:
             await self.session._listen()
         except Exception as e:
-            logger.error(f"Listen failed: {e}")
+            logger.error(f"Listen failed (Client: {self.id}): {e}")
             await self._cleanup_session()
 
     async def start(
@@ -529,15 +533,15 @@ class Client:
 
                     async with self._lock:
                         try:
-                            logger.info("Trying to connect...")
+                            logger.info(f"Trying to connect... (Client: {self.id})")
                             await self.session.connect(self.__token)
                             await self.session.handshake_request()
-                            logger.info("Connected successfully.")
+                            logger.info(f"Connected successfully. (Client: {self.id})")
 
                             self._ping_task = self._create_task(self._ping_loop())
                             listen_task = self._create_task(self._safe_listen())
                         except Exception as e:
-                            logger.error(f"Connection failed: {e}")
+                            logger.error(f"Connection failed (Client: {self.id}): {e}")
                             await asyncio.sleep(5)
                             continue
 
@@ -547,14 +551,14 @@ class Client:
                         try:
                             await listen_task
                         except asyncio.CancelledError:
-                            logger.info("Listening task cancelled.")
+                            logger.info(f"Listening task cancelled (Client: {self.id}).")
                             break
 
             except KeyboardInterrupt:
-                logger.info("KeyboardInterrupt received, stopping client...")
+                logger.info(f"KeyboardInterrupt received, stopping client (Client: {self.id})...")
                 await self.stop()
             except Exception as e:
-                logger.error(f"Unhandled exception in start: {e}")
+                logger.error(f"Unhandled exception in start (Client: {self.id}): {e}")
                 await self.stop()
                 raise
             finally:
@@ -573,7 +577,7 @@ class Client:
             return
 
         self._stopped = True
-        logger.info("Stopping client...")
+        logger.info(f"Stopping client (Client: {self.id})...")
 
         if self._ping_task:
             self._ping_task.cancel()
@@ -589,7 +593,7 @@ class Client:
                 await task
 
         await self._cleanup_session()
-        logger.info("Client stopped cleanly.")
+        logger.info(f"Client stopped cleanly (Client: {self.id}).")
 
     async def _run_async(self):
         await self.start()
@@ -838,7 +842,7 @@ class Client:
                     f"Session file '{self.__session_file}' deleted successfully."
                 )
             except Exception as e:
-                logger.error(f"Failed to delete session file: {e}")
+                logger.error(f"Failed to delete session file (Client: {self.id}): {e}")
 
     async def send_message(
         self,
