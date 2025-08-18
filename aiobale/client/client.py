@@ -25,7 +25,7 @@ from typing import (
     Union,
 )
 from types import TracebackType
-from contextlib import suppress
+from contextlib import AbstractAsyncContextManager, asynccontextmanager, suppress
 
 from .session import AiohttpSession, BaseSession
 from ..exceptions import AiobaleError
@@ -220,6 +220,7 @@ from ..logger import logger
 from .auth_cli import PhoneLoginCLI
 
 
+LifespanType = Callable[["Client"], AbstractAsyncContextManager[None]]
 DEFAULT_SESSION: Final[pathlib.Path] = pathlib.Path("./session.bale")
 
 # --- Global registry of clients ---
@@ -262,6 +263,11 @@ def _install_global_signal_handlers(loop):
 class IgnoredUpdates:
     event_type: str
     targets: List[Any] = field(default_factory=list)
+    
+
+@asynccontextmanager
+async def default_lifespan(client: Client):
+    yield
 
 
 class Client:
@@ -314,6 +320,7 @@ class Client:
         dispatcher: Optional[Dispatcher] = None,
         session_file: Optional[Union[str, pathlib.Path]] = DEFAULT_SESSION,
         session: Optional[BaseSession] = None,
+        lifespan: Optional[LifespanType] = None,
         proxy: Optional[str] = None,
         user_agent: Optional[str] = None,
         show_update_errors: bool = False
@@ -324,6 +331,7 @@ class Client:
         session._bind_client(self)
         self.session: BaseSession = session
         self.dispatcher: Optional[Dispatcher] = dispatcher
+        self._lifespan: LifespanType = lifespan or default_lifespan
         self._proxy = proxy
         self._user_agent = user_agent
 
@@ -514,43 +522,44 @@ class Client:
         if signal_handling:
             _install_global_signal_handlers(loop)
 
-        try:
-            while not self._stopped:
-                await self._cleanup_session()
+        async with self._lifespan(self):
+            try:
+                while not self._stopped:
+                    await self._cleanup_session()
 
-                async with self._lock:
-                    try:
-                        logger.info("Trying to connect...")
-                        await self.session.connect(self.__token)
-                        await self.session.handshake_request()
-                        logger.info("Connected successfully.")
+                    async with self._lock:
+                        try:
+                            logger.info("Trying to connect...")
+                            await self.session.connect(self.__token)
+                            await self.session.handshake_request()
+                            logger.info("Connected successfully.")
 
-                        self._ping_task = self._create_task(self._ping_loop())
-                        listen_task = self._create_task(self._safe_listen())
-                    except Exception as e:
-                        logger.error(f"Connection failed: {e}")
-                        await asyncio.sleep(5)
-                        continue
+                            self._ping_task = self._create_task(self._ping_loop())
+                            listen_task = self._create_task(self._safe_listen())
+                        except Exception as e:
+                            logger.error(f"Connection failed: {e}")
+                            await asyncio.sleep(5)
+                            continue
 
-                if run_in_background:
-                    return
-                else:
-                    try:
-                        await listen_task
-                    except asyncio.CancelledError:
-                        logger.info("Listening task cancelled.")
-                        break
+                    if run_in_background:
+                        return
+                    else:
+                        try:
+                            await listen_task
+                        except asyncio.CancelledError:
+                            logger.info("Listening task cancelled.")
+                            break
 
-        except KeyboardInterrupt:
-            logger.info("KeyboardInterrupt received, stopping client...")
-            await self.stop()
-        except Exception as e:
-            logger.error(f"Unhandled exception in start: {e}")
-            await self.stop()
-            raise
-        finally:
-            if self in _CLIENTS:
-                _CLIENTS.remove(self)
+            except KeyboardInterrupt:
+                logger.info("KeyboardInterrupt received, stopping client...")
+                await self.stop()
+            except Exception as e:
+                logger.error(f"Unhandled exception in start: {e}")
+                await self.stop()
+                raise
+            finally:
+                if self in _CLIENTS:
+                    _CLIENTS.remove(self)
 
     async def stop(self):
         """
