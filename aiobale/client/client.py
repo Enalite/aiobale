@@ -646,7 +646,7 @@ class Client:
             return
 
         if self.dispatcher is not None:
-            await self.dispatcher.dispatch(event_type, event)
+            await self.dispatcher.dispatch(event_type, event, client=self)
 
     @classmethod
     async def __download_file_binary_io(
