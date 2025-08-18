@@ -316,9 +316,10 @@ class Client:
         session: Optional[BaseSession] = None,
         proxy: Optional[str] = None,
         user_agent: Optional[str] = None,
+        show_update_errors: bool = False
     ):
         if session is None:
-            session = AiohttpSession(user_agent=user_agent, proxy=proxy)
+            session = AiohttpSession(user_agent=user_agent, proxy=proxy, show_update_errors=show_update_errors)
 
         session._bind_client(self)
         self.session: BaseSession = session
