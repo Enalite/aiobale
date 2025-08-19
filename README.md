@@ -46,13 +46,13 @@ It transforms the raw complexity of Bale’s encrypted Protobuf-based network in
 ## 📦 Installation
 
 ```bash
-pip install aiobale
+pip install -U aiobale
 ````
 
 Or get the latest development version from GitHub:
 
 ```bash
-pip install git+https://github.com/Enalite/aiobale.git
+pip install -U git+https://github.com/Enalite/aiobale.git
 ```
 
 ---
@@ -72,7 +72,6 @@ It is intended strictly for **educational and ethical use** — please avoid any
 Here’s a minimal bot that replies with the same message (and echoes back documents too):
 
 ```python
-import asyncio
 from aiobale import Client, Dispatcher
 from aiobale.types import Message
 
@@ -81,16 +80,13 @@ client = Client(dp)
 
 @dp.message()
 async def echo(msg: Message):
-    if content := msg.content.document:
+    if content := msg.document:
         return await msg.answer_document(content, use_own_content=True)
     elif text := msg.text:
         return await msg.answer(text)
     await msg.answer("Nothing to echo!")
 
-async def main():
-    await client.start()
-
-asyncio.run(main())
+client.run()
 ```
 
 Want more? Visit [**docs.aiobale.ir**](https://docs.aiobale.ir) for comprehensive examples and advanced handler customization.
