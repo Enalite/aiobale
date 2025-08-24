@@ -9,9 +9,7 @@
   <!-- Core badges: PyPI, Downloads, Python versions, License, CI -->
   <a href="https://pypi.org/project/aiobale"><img src="https://img.shields.io/pypi/v/aiobale?logo=pypi&color=brightgreen" alt="PyPI"></a>
   <a href="https://pepy.tech/project/aiobale"><img src="https://static.pepy.tech/badge/aiobale" alt="Downloads"></a>
-  <a href="https://pypi.org/project/aiobale"><img src="https://img.shields.io/pypi/pyversions/aiobale?logo=python" alt="Python Versions"></a>
   <a href="https://github.com/Enalite/aiobale/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Enalite/aiobale?color=yellowgreen" alt="License"></a>
-  <a href="https://github.com/Enalite/aiobale/actions"><img src="https://img.shields.io/github/actions/workflow/status/Enalite/aiobale/ci.yml?branch=main&label=CI&logo=github" alt="CI"></a>
   <br><br>
   <!-- GitHub stats badges: Stars, Forks, Issues, Last Commit, Contributors -->
   <a href="https://github.com/Enalite/aiobale/stargazers"><img src="https://img.shields.io/github/stars/Enalite/aiobale?style=social&label=Stars" alt="Stars"></a>
