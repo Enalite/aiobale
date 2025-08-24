@@ -46,7 +46,7 @@ This README keeps the essentials upfront and then dives into practical examples,
 
 ## ✅ Quick Start — Echo Bot (use this exact code)
 
-Copy-paste this and you're running an echo bot in minutes. This is the **same echo code** used in the previous README — unchanged and ready-to-go:
+Copy-paste this and you're running an echo bot in minutes.
 
 ```python
 from aiobale import Client, Dispatcher
@@ -153,5 +153,5 @@ Aiobale is published under the **MIT License**. See `LICENSE` for full terms.
 ---
 
 <p align="center">
-  Built with ❤️ — go build something cool. If you want, I can also prepare a polished `CONTRIBUTING.md`, `ISSUE_TEMPLATE`, or a GitHub Actions CI file to go with this README.
+  Built with ❤️
 </p>
