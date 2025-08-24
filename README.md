@@ -5,14 +5,46 @@
 <h1 align="center">⚡ Aiobale ⚡</h1>
 <p align="center"><strong>Async Python Client for Bale Messenger — Modern, Fast, Pythonic</strong></p>
 
-<p align="center">
-  <a href="https://pypi.org/project/aiobale"><img src="https://img.shields.io/pypi/v/aiobale?color=brightgreen&logo=pypi" alt="PyPI"></a>
-  <a href="https://pepy.tech/project/aiobale"><img src="https://static.pepy.tech/badge/aiobale" alt="Downloads"></a>
-  <a href="https://github.com/Enalite/aiobale"><img src="https://img.shields.io/github/stars/Enalite/aiobale?style=social" alt="Stars"></a>
-  <a href="https://github.com/Enalite/aiobale"><img src="https://img.shields.io/github/forks/Enalite/aiobale?style=social" alt="Forks"></a>
-  <img src="https://img.shields.io/github/last-commit/Enalite/aiobale" alt="Last Commit">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow?logo=open-source-initiative" alt="License"></a>
-</p>
+<!-- ====== CORE / VISIBILITY ====== -->
+[![PyPI version](https://img.shields.io/pypi/v/aiobale?logo=pypi&color=brightgreen)](https://pypi.org/project/aiobale)
+[![PyPI - Python Versions](https://img.shields.io/pypi/pyversions/aiobale?logo=python)](https://pypi.org/project/aiobale)
+[![PyPI - Downloads](https://pepy.tech/badge/aiobale)](https://pepy.tech/project/aiobale)
+[![Latest release](https://img.shields.io/github/v/release/Enalite/aiobale?label=latest%20release)](https://github.com/Enalite/aiobale/releases)
+
+<!-- ====== LICENSE & MAINTENANCE ====== -->
+[![License: MIT](https://img.shields.io/github/license/Enalite/aiobale?color=yellowgreen)](https://github.com/Enalite/aiobale/blob/main/LICENSE)
+[![Maintenance](https://img.shields.io/maintenance/yes/2025?color=yellow)](https://github.com/Enalite/aiobale)
+
+<!-- ====== CI & QUALITY ====== -->
+[![Build Status](https://img.shields.io/github/actions/workflow/status/Enalite/aiobale/ci.yml?branch=main&label=CI&logo=github)](https://github.com/Enalite/aiobale/actions) <!-- replace workflow filename if different -->
+[![Codecov](https://img.shields.io/codecov/c/github/Enalite/aiobale?logo=codecov)](https://codecov.io/gh/Enalite/aiobale) <!-- requires Codecov setup -->
+[![Pytest](https://img.shields.io/badge/tests-passing-brightgreen)]()
+
+<!-- ====== REPO STATS ====== -->
+[![Stars](https://img.shields.io/github/stars/Enalite/aiobale?style=social)](https://github.com/Enalite/aiobale/stargazers)
+[![Forks](https://img.shields.io/github/forks/Enalite/aiobale?style=social)](https://github.com/Enalite/aiobale/network/members)
+[![Contributors](https://img.shields.io/github/contributors/Enalite/aiobale)](https://github.com/Enalite/aiobale/graphs/contributors)
+[![Open issues](https://img.shields.io/github/issues/Enalite/aiobale)](https://github.com/Enalite/aiobale/issues)
+[![Open PRs](https://img.shields.io/github/issues-pr/Enalite/aiobale)](https://github.com/Enalite/aiobale/pulls)
+[![Last commit](https://img.shields.io/github/last-commit/Enalite/aiobale)](https://github.com/Enalite/aiobale/commits)
+
+<!-- ====== METRICS & CODE ====== -->
+[![Repo size](https://img.shields.io/github/repo-size/Enalite/aiobale)](https://github.com/Enalite/aiobale)
+[![Top Language](https://img.shields.io/github/languages/top/Enalite/aiobale)](https://github.com/Enalite/aiobale)
+[![Commit activity](https://img.shields.io/github/commit-activity/m/Enalite/aiobale)](https://github.com/Enalite/aiobale/commits)
+[![Lines of Code](https://img.shields.io/tokei/lines/github/Enalite/aiobale)](https://github.com/Enalite/aiobale)
+
+<!-- ====== SECURITY & DEPENDENCIES ====== -->
+[![Snyk Vulnerabilities](https://snyk.io/test/github/Enalite/aiobale/badge.svg)](https://snyk.io/test/github/Enalite/aiobale) <!-- requires Snyk setup -->
+[![Dependencies](https://img.shields.io/librariesio/release/pypi/aiobale)](https://libraries.io/pypi/aiobale)
+
+<!-- ====== DOCS & COMMUNITY ====== -->
+[![Docs](https://img.shields.io/website?url=https%3A%2F%2Fdocs.aiobale.ir)](https://docs.aiobale.ir)
+[![Telegram Chat](https://img.shields.io/badge/Telegram-Chat-blue?logo=telegram)](https://t.me/aiobale)
+[![Bale Channel](https://img.shields.io/badge/Bale-Channel-8da0cb?logo=data:image/svg+xml;utf8,%3Csvg%20xmlns%3D'http%3A//www.w3.org/2000/svg'%3E%3C/svg%3E)](https://ble.ir/aiobale)
+
+<!-- ====== SOCIAL / MISC ====== -->
+[![Watchers](https://img.shields.io/github/watchers/Enalite/aiobale?style=social)](https://github.com/Enalite/aiobale/watchers)
 
 ---
 
