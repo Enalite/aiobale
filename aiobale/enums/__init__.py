@@ -13,6 +13,7 @@ from .send_type import SendType
 from .giving_type import GivingType
 from .gift_openning import GiftOpenning
 from .auth_errors import AuthErrors
+from .poll_type import PollType
 
 
 __all__ = (
@@ -30,5 +31,6 @@ __all__ = (
     "SendType",
     "GivingType",
     "GiftOpenning",
-    "AuthErrors"
+    "AuthErrors",
+    "PollType"
 )

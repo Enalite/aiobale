@@ -5,8 +5,7 @@ from .message_content import (
     MessageContent,
     TextMessage,
     DocumentMessage,
-    MessageCaption,
-    TemplateMessage
+    MessageCaption
 )
 from .peer import Peer
 from .client import ClientData
@@ -56,8 +55,9 @@ from .file_ext import VideoExt, VoiceExt, AudioExt, PhotoExt, DocumentsExt
 from .wallet import Wallet
 from .gift_packet import GiftPacket
 from .winner import Winner
-from .inline_keyboard import InlineKeyboardButton, InlineKeyboardMarkup
 from .upvote import Upvote
+from .poll_message import PollMessage
+from .poll_option import PollOption
 
 
 __all__ = (
@@ -133,8 +133,7 @@ __all__ = (
     "Wallet",
     "GiftPacket",
     "Winner",
-    "InlineKeyboardMarkup",
-    "InlineKeyboardButton",
-    "TemplateMessage",
-    "Upvote"
+    "Upvote",
+    "PollMessage",
+    "PollOption"
 )

@@ -112,6 +112,7 @@ from ..methods import (
     UpvotePost,
     RevokeUpvotedPost,
     GetMessageUpvoters,
+    CreatePoll,
 )
 from ..types import (
     MessageContent,
@@ -164,9 +165,9 @@ from ..types import (
     UpdateBody,
     Request,
     GiftPacket,
-    InlineKeyboardMarkup,
-    TemplateMessage,
     Upvote,
+    PollMessage,
+    PollOption,
 )
 from ..types.responses import (
     MessageResponse,
@@ -200,6 +201,7 @@ from ..types.responses import (
     PacketResponse,
     UpvoteResponse,
     UpvotersResponse,
+    CreatePollResponse,
 )
 from ..enums import (
     ChatType,
@@ -214,6 +216,7 @@ from ..enums import (
     SendType,
     GivingType,
     AuthErrors,
+    PollType,
 )
 from ..dispatcher.dispatcher import Dispatcher
 from ..logger import logger
@@ -848,7 +851,6 @@ class Client:
         text: str,
         chat_id: int,
         chat_type: ChatType,
-        reply_markup: Optional[InlineKeyboardMarkup] = None,
         reply_to: Optional[Union[Message, InfoMessage]] = None,
         message_id: Optional[int] = None,
     ) -> Message:
@@ -876,13 +878,6 @@ class Client:
         self._ignored_messages.targets.append(message_id)
 
         content = MessageContent(text=TextMessage(value=text))
-
-        if reply_markup:
-            content = MessageContent(
-                bot_message=TemplateMessage(
-                    message=content, inline_keyboard_markup=reply_markup
-                )
-            )
 
         if reply_to is not None:
             reply_to = self._ensure_info_message(reply_to)
@@ -3131,7 +3126,6 @@ class Client:
         chat_type: ChatType,
         caption: Optional[str] = None,
         reply_to: Optional[Union[Message, InfoMessage]] = None,
-        reply_markup: Optional[InlineKeyboardMarkup] = None,
         message_id: Optional[int] = None,
         send_type: SendType = SendType.DOCUMENT,
         thumb: Optional[Thumbnail] = None,
@@ -3170,13 +3164,6 @@ class Client:
 
         content = MessageContent(document=document)
 
-        if reply_markup:
-            content = MessageContent(
-                bot_message=TemplateMessage(
-                    message=content, inline_keyboard_markup=reply_markup
-                )
-            )
-
         if reply_to is not None:
             reply_to = self._ensure_info_message(reply_to)
 
@@ -3198,7 +3185,6 @@ class Client:
         chat_type: ChatType,
         caption: Optional[str] = None,
         reply_to: Optional[Union[Message, InfoMessage]] = None,
-        reply_markup: Optional[InlineKeyboardMarkup] = None,
         message_id: Optional[int] = None,
         use_own_content: bool = False,
     ) -> Message:
@@ -3228,7 +3214,6 @@ class Client:
             reply_to=reply_to,
             message_id=message_id,
             send_type=SendType.DOCUMENT,
-            reply_markup=reply_markup,
             use_own_content=use_own_content,
         )
 
@@ -3251,7 +3236,6 @@ class Client:
         chat_type: ChatType,
         caption: Optional[str] = None,
         reply_to: Optional[Union[Message, InfoMessage]] = None,
-        reply_markup: Optional[InlineKeyboardMarkup] = None,
         cover_thumb: Optional[FileInput] = None,
         cover_width: int = 1000,
         cover_height: int = 1000,
@@ -3292,7 +3276,6 @@ class Client:
             chat_type=chat_type,
             caption=caption,
             reply_to=reply_to,
-            reply_markup=reply_markup,
             message_id=message_id,
             send_type=SendType.PHOTO,
             thumb=cover_thumb,
@@ -3306,7 +3289,6 @@ class Client:
         chat_type: ChatType,
         caption: Optional[str] = None,
         reply_to: Optional[Union[Message, InfoMessage]] = None,
-        reply_markup: Optional[InlineKeyboardMarkup] = None,
         cover_thumb: Optional[FileInput] = None,
         cover_width: int = 1000,
         cover_height: int = 1000,
@@ -3351,7 +3333,6 @@ class Client:
             chat_type=chat_type,
             caption=caption,
             reply_to=reply_to,
-            reply_markup=reply_markup,
             message_id=message_id,
             send_type=SendType.VIDEO,
             thumb=cover_thumb,
@@ -3365,7 +3346,6 @@ class Client:
         chat_type: ChatType,
         caption: Optional[str] = None,
         reply_to: Optional[Union[Message, InfoMessage]] = None,
-        reply_markup: Optional[InlineKeyboardMarkup] = None,
         duration: Optional[int] = None,
         message_id: Optional[int] = None,
     ) -> Message:
@@ -3394,7 +3374,6 @@ class Client:
             chat_type=chat_type,
             caption=caption,
             reply_to=reply_to,
-            reply_markup=reply_markup,
             message_id=message_id,
             send_type=SendType.VOICE,
             ext=ext,
@@ -3407,7 +3386,6 @@ class Client:
         chat_type: ChatType,
         caption: Optional[str] = None,
         reply_to: Optional[Union[Message, InfoMessage]] = None,
-        reply_markup: Optional[InlineKeyboardMarkup] = None,
         duration: Optional[int] = None,
         album: Optional[str] = None,
         genre: Optional[str] = None,
@@ -3444,7 +3422,6 @@ class Client:
             chat_type=chat_type,
             caption=caption,
             reply_to=reply_to,
-            reply_markup=reply_markup,
             message_id=message_id,
             send_type=SendType.AUDIO,
             ext=ext,
@@ -3457,7 +3434,6 @@ class Client:
         chat_type: ChatType,
         caption: Optional[str] = None,
         reply_to: Optional[Union[Message, InfoMessage]] = None,
-        reply_markup: Optional[InlineKeyboardMarkup] = None,
         cover_thumb: Optional[FileInput] = None,
         cover_width: int = 1000,
         cover_height: int = 1000,
@@ -3501,7 +3477,6 @@ class Client:
             chat_type=chat_type,
             caption=caption,
             reply_to=reply_to,
-            reply_markup=reply_markup,
             message_id=message_id,
             send_type=SendType.GIF,
             thumb=cover_thumb,
@@ -3675,5 +3650,45 @@ class Client:
 
         message = self._ensure_info_message(message, rewrite_date=True)
         call = GetMessageUpvoters(message=message, load_more_state=state)
+
+        return await self(call)
+
+    async def create_poll(
+        self,
+        peer: Peer,
+        question: str,
+        options: List[PollOption],
+        type: PollType,
+        is_anonymous: bool = True
+    ) -> CreatePollResponse:
+        """
+        Creates a new poll in a chat.
+
+        Args:
+            peer (Peer): The peer (chat or user) where the poll will be created.
+            question (str): The question or topic of the poll.
+            options (PollOption): The available choices for the poll participants.
+            type (PollType): The type of the poll (single-choice or multiple-choice).
+            is_anonymous (bool): Whether the poll is anonymous. Defaults to True.
+
+        Returns:
+            CreatePollResponse: The response containing the created poll ID.
+
+        Raises:
+            BaleError: If the server returns an error during poll creation.
+            AiobaleError: For client-side errors such as invalid parameters.
+        """
+
+        poll = PollMessage(
+            question=question,
+            options=options,
+            type=type,
+            is_anonymous=is_anonymous,
+        )
+
+        call = CreatePoll(
+            poll=poll,
+            peer=peer,
+        )
 
         return await self(call)

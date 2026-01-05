@@ -7,9 +7,7 @@ from .base import BaleObject
 from .thumbnail import Thumbnail
 from .file_ext import DocumentsExt
 from .gift_packet import GiftPacket
-from .service_message import ServiceMessage
-from .inline_keyboard import InlineKeyboardMarkup
-from ..utils import generate_id
+from .poll_message import PollMessage
 
 
 class TextMessage(BaleObject):
@@ -121,40 +119,6 @@ class DocumentMessage(BaleObject):
             )
 
 
-class TemplateMessage(BaleObject):
-    """
-    Represents a template message that can be sent, including its content,
-    a unique temporary ID, and optional inline keyboard markup.
-    """
-
-    message: MessageContent = Field(..., alias="1")
-    """The main content of the message."""
-
-    temp_id: int = Field(default_factory=generate_id, alias="2")
-    """A unique temporary identifier for the message, generated automatically."""
-
-    inline_keyboard_markup: Optional[InlineKeyboardMarkup] = Field(None, alias="5")
-    """Optional inline keyboard markup to be attached to the message."""
-
-    if TYPE_CHECKING:
-        # This __init__ is only used for type checking and IDE autocomplete.
-        # It will not be included in runtime behavior.
-        def __init__(
-            __pydantic__self__,
-            *,
-            message: MessageContent,
-            temp_id: int = ...,
-            inline_keyboard_markup: Optional[InlineKeyboardMarkup] = None,
-            **__pydantic_kwargs,
-        ) -> None:
-            super().__init__(
-                message=message,
-                temp_id=temp_id,
-                inline_keyboard_markup=inline_keyboard_markup,
-                **__pydantic_kwargs
-            )
-
-
 class MessageContent(BaleObject):
     """
     Container for different types of message content.
@@ -169,9 +133,11 @@ class MessageContent(BaleObject):
     text: Optional[TextMessage] = Field(None, alias="15")
     """Optional text content if the message is a plain text message."""
 
-    service_message: Optional[ServiceMessage] = Field(None, alias="11")
-    bot_message: Optional[TemplateMessage] = Field(None, alias="13")
     gift: Optional[GiftPacket] = Field(None, alias="17")
+    """Optional gift packet content if the message is a gift."""
+
+    poll: Optional[PollMessage] = Field(None, alias="29")
+    """Optional poll content if the message is a poll."""
 
     if TYPE_CHECKING:
 
@@ -182,7 +148,7 @@ class MessageContent(BaleObject):
             epmty: bool = False,
             text: Optional[TextMessage] = None,
             gift: Optional[GiftPacket] = None,
-            bot_message: Optional[TemplateMessage] = None,
+            poll: Optional[PollMessage] = None,
             **__pydantic_kwargs,
         ) -> None:
             super().__init__(
@@ -190,7 +156,7 @@ class MessageContent(BaleObject):
                 text=text,
                 epmty=epmty,
                 gift=gift,
-                bot_message=bot_message,
+                poll=poll,
                 **__pydantic_kwargs,
             )
 

@@ -28,6 +28,7 @@ from .wallet import WalletResponse
 from .open_packet import PacketResponse
 from .upvote_response import UpvoteResponse
 from .upvoters_response import UpvotersResponse
+from .create_poll import CreatePollResponse
 
 
 __all__ = (
@@ -61,5 +62,6 @@ __all__ = (
     "WalletResponse",
     "PacketResponse",
     "UpvoteResponse",
-    "UpvotersResponse"
+    "UpvotersResponse",
+    "CreatePollResponse"
 )

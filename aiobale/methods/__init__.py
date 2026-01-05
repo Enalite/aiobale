@@ -75,6 +75,7 @@ from .files import GetFileUrl, GetFileUploadUrl
 from .configs import EditParameter, GetParameters
 from .report import SendReport
 from .presence import SetOnline, StopTyping, Typing
+from .poll import CreatePoll
 from .base import BaleMethod, BaleType
 
 
@@ -160,4 +161,5 @@ __all__ = (
     "GetMessageUpvoters",
     "UpvotePost",
     "RevokeUpvotedPost",
+    "CreatePoll"
 )
