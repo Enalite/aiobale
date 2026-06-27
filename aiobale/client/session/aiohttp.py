@@ -162,7 +162,7 @@ class AiohttpSession(BaseSession):
             return content
 
         result = self.decoder(clean_grpc(content))
-        return method.__returning__.model_validate(result)
+        return method.__returning__.model_validate(result, context={"client": self.client})
 
     async def upload(
         self,
