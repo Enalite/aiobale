@@ -52,7 +52,12 @@ class InlineKeyboardButton(BaleObject):
             for i in ("2", "3", "9"):
                 if i not in data:
                     continue
-                data[i] = data[i]["1"]
+                val = data[i]
+                # Optional scalars arrive wrapped as {"1": value}; an absent one
+                # arrives as {}. Unwrap to the value (or None), or keep as-is if
+                # already unwrapped.
+                if isinstance(val, dict):
+                    data[i] = val.get("1")
         return data
 
     @model_serializer(mode="wrap")
@@ -99,15 +104,21 @@ class InlineKeyboardMarkup(BaleObject):
         Converts the raw serialized button structure from the API
         into a list of InlineKeyboardButton rows before validation.
         """
-        if isinstance(data, dict) and "1" in data and isinstance(data["1"], list):
-            raw_buttons = data["1"]
+        if isinstance(data, dict) and "1" in data and isinstance(data["1"], (list, dict)):
+            raw = data["1"]
+            # A single row may arrive as a dict instead of a one-element list.
+            raw_buttons = raw if isinstance(raw, list) else [raw]
 
             keyboard_rows = []
             for row in raw_buttons:
                 if isinstance(row, dict) and "1" in row:
-                    buttons_dict = row["1"]
-                    btn = InlineKeyboardButton.model_validate(buttons_dict)
-                    keyboard_rows.append([btn])
+                    buttons = row["1"]
+                    # A row may hold a single button (dict) or several buttons (list).
+                    if isinstance(buttons, list):
+                        btns = [InlineKeyboardButton.model_validate(b) for b in buttons]
+                    else:
+                        btns = [InlineKeyboardButton.model_validate(buttons)]
+                    keyboard_rows.append(btns)
                 else:
                     pass
 
