@@ -71,7 +71,7 @@ class Update(BaleObject):
         This simplifies event handling by allowing to check a single property
         for the update's active event.
         """
-        for field_name in self.__annotations__:
+        for field_name in self.model_fields:
             value = getattr(self, field_name, None)
             if value is not None:
                 if hasattr(value, "fixed"):
